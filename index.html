@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>SAFS Software | Service Portal</title>
+<style>
+:root{--bg:#f3f6fc;--panel:#fff;--ink:#172033;--muted:#68758b;--navy:#101827;--blue:#2563eb;--line:#e3e9f3;--green:#0f9f6e}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(125deg,#101827,#1e3a8a);color:white;padding:25px max(20px,calc((100% - 1180px)/2))}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:14px;background:#fff;color:#17357b;display:grid;place-items:center;font-weight:900;font-size:18px}.brand h1{margin:0;font-size:22px}.brand p{margin:4px 0 0;color:#dbeafe;font-size:13px}.pill{border:1px solid #ffffff50;border-radius:99px;padding:8px 12px;font-size:12px;color:#eaf2ff}
+main{max-width:1180px;margin:auto;padding:24px 18px 55px}.welcome{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}.welcome h2{margin:0 0 7px;font-size:25px}.welcome p{margin:0;color:var(--muted)}.search{width:min(100%,330px);padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:white;outline-color:var(--blue)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:25px}.stat{background:var(--panel);border:1px solid var(--line);padding:16px;border-radius:16px}.stat strong{display:block;font-size:23px}.stat span{font-size:13px;color:var(--muted)}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:26px 0 14px}.section-head h3{margin:0;font-size:18px}.hint{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.service{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;min-height:180px;box-shadow:0 4px 14px #15254a08}.service .emoji{font-size:26px;margin-bottom:12px}.service h4{margin:0 0 7px;font-size:16px}.service p{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.5;flex:1}.open{display:inline-flex;justify-content:center;text-decoration:none;background:#edf3ff;color:#1d4ed8;border-radius:10px;padding:10px 12px;font-weight:700;font-size:13px}.open:hover{background:#dce8ff}.empty{padding:25px;text-align:center;color:var(--muted);background:white;border:1px dashed var(--line);border-radius:14px}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:18px}.panel summary{cursor:pointer;font-weight:750}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:#45516a}.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:white}.field.full{grid-column:1/-1}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.btn{border:0;border-radius:10px;padding:11px 15px;background:var(--blue);color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#eef2f8;color:#334155}.btn.danger{background:#fff0f0;color:#b91c1c}.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:12px}.custom-tools{display:flex;gap:8px;flex-wrap:wrap}.custom-tools button{padding:6px 9px;font-size:12px}
+footer{text-align:center;padding:22px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
+@media(max-width:560px){header{padding:20px 16px}.brand h1{font-size:19px}.welcome h2{font-size:22px}.grid,.stats,.formgrid{grid-template-columns:1fr}.stats .stat:last-child{grid-column:auto}.field.full{grid-column:auto}.service{min-height:165px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">SA</div><div><h1>SAFS SOFTWARE</h1><p>One Portal · All Your Services</p></div></div>
+    <div class="pill">ONE STOP SERVICE PORTAL</div>
+  </div>
+</header>
+<main>
+  <div class="welcome">
+    <div><h2>आपका सर्विस डैशबोर्ड</h2><p>सभी जरूरी सेवाएँ और आपके अतिरिक्त वेबसाइट लिंक एक ही जगह।</p></div>
+    <input id="search" class="search" type="search" placeholder="सेवा या लिंक खोजें…">
+  </div>
+  <div class="stats">
+    <div class="stat"><strong id="serviceCount">8</strong><span>मुख्य सेवाएँ</span></div>
+    <div class="stat"><strong id="customCount">0</strong><span>आपके जोड़े हुए लिंक</span></div>
+    <div class="stat"><strong>1 Portal</strong><span>सभी लिंक एक जगह</span></div>
+  </div>
+  <div class="section-head"><h3>मुख्य सेवाएँ</h3><span class="hint">किसी सेवा पर क्लिक करके वेबसाइट खोलें</span></div>
+  <div class="grid" id="services"></div>
+  <div class="section-head"><h3>मेरे अतिरिक्त वेबसाइट लिंक</h3><span class="hint">अपने उपयोग के लिंक जोड़ें</span></div>
+  <div class="grid" id="customLinks"></div>
+  <details class="panel" id="addPanel">
+    <summary>＋ नया वेबसाइट लिंक जोड़ें / मैनेज करें</summary>
+    <form id="linkForm">
+      <div class="formgrid">
+        <div class="field"><label for="linkName">लिंक का नाम</label><input id="linkName" required maxlength="60" placeholder="जैसे GST Portal"></div>
+        <div class="field"><label for="linkCategory">कैटेगरी</label><select id="linkCategory"><option>Government</option><option>Accounting</option><option>Banking & Finance</option><option>Computer & Software</option><option>Business</option><option>Other</option></select></div>
+        <div class="field full"><label for="linkUrl">वेबसाइट URL</label><input id="linkUrl" type="url" required placeholder="https://example.com"></div>
+        <div class="field full"><label for="linkDescription">छोटा विवरण (वैकल्पिक)</label><input id="linkDescription" maxlength="140" placeholder="यह लिंक किस काम आता है?"></div>
+      </div>
+      <div class="actions"><button class="btn" type="submit">लिंक सेव करें</button><button class="btn secondary" type="reset">फॉर्म साफ करें</button></div>
+    </form>
+    <p class="note">नोट: आपके जोड़े हुए लिंक इसी ब्राउज़र में सेव होते हैं। ब्राउज़र का डेटा साफ करने पर ये हट सकते हैं। वेबसाइट को GitHub पर डालने से लिंक अपने-आप सभी डिवाइस पर sync नहीं होंगे। इसके लिए बाद में database/login जोड़ा जा सकता है।</p>
+  </details>
+  <div class="panel">
+    <strong>सुरक्षा और इस्तेमाल</strong>
+    <p class="note">यह शुरुआती front-end portal है। किसी सरकारी या बैंकिंग वेबसाइट पर लॉगिन करते समय उसका सही domain जाँचें। इस पेज में पासवर्ड, OTP, Aadhaar या बैंक जानकारी सेव न करें। कुछ सेवाओं के लिए आधिकारिक वेबसाइट पर अलग से लॉगिन जरूरी होगा।</p>
+    <div class="actions"><button class="btn secondary" id="exportBtn" type="button">मेरे लिंक Export करें</button><button class="btn secondary" id="importBtn" type="button">लिंक Import करें</button><button class="btn danger" id="clearBtn" type="button">मेरे जोड़े लिंक हटाएँ</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
+  </div>
+</main>
+<footer>Powered by SAFS Software · © <span id="year"></span></footer>
+<script>
+const baseServices = [
+ {name:"CSC / Digital Services",emoji:"🧾",desc:"Common Service Centre और डिजिटल सेवाओं के लिए।",url:"https://digitalseva.csc.gov.in/"},
+ {name:"PAN Services",emoji:"🪪",desc:"PAN से जुड़ी सेवाएँ और आवेदन।",url:"https://www.protean-tinpan.com/"},
+ {name:"GST Portal",emoji:"📊",desc:"GST return, registration और taxpayer services।",url:"https://www.gst.gov.in/"},
+ {name:"TDS / Income Tax",emoji:"💼",desc:"Income Tax और TDS से संबंधित काम।",url:"https://www.incometax.gov.in/"},
+ {name:"PF / EPFO",emoji:"🏦",desc:"EPFO member services और PF से जुड़ी जानकारी।",url:"https://www.epfindia.gov.in/"},
+ {name:"Gumasta / Maharashtra Labour",emoji:"🏢",desc:"महाराष्ट्र में Shops & Establishments से संबंधित सेवाएँ।",url:"https://lms.mahaonline.gov.in/"},
+ {name:"Computer Software Services",emoji:"💻",desc:"Software installation और laptop/computer सहायता के लिए अपना कार्य लिंक जोड़ें।",url:""},
+ {name:"Laptop Order Enquiry",emoji:"🛒",desc:"New-generation laptops order पर उपलब्ध। अपना enquiry/contact link जोड़ें।",url:""}
+];
+const $ = id => document.getElementById(id);
+const safeUrl = value => {try {const u = new URL(value); return ["http:","https:"].includes(u.protocol) ? u.href : "";} catch {return "";}};
+let custom = [];
+try { custom = JSON.parse(localStorage.getItem("safs_custom_links") || "[]"); if(!Array.isArray(custom)) custom=[]; } catch { custom=[]; }
+function card(item, isCustom=false, index=-1){
+ const article=document.createElement("article"); article.className="service";
+ const emoji=document.createElement("div"); emoji.className="emoji"; emoji.textContent=item.emoji || "🔗"; article.appendChild(emoji);
+ const h=document.createElement("h4"); h.textContent=item.name; article.appendChild(h);
+ const p=document.createElement("p"); p.textContent=item.desc || item.category || "आपका सेव किया हुआ लिंक"; article.appendChild(p);
+ const url=safeUrl(item.url);
+ if(url){const a=document.createElement("a");a.className="open";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="वेबसाइट खोलें ↗";article.appendChild(a);}
+ else {const a=document.createElement("a");a.className="open";a.href="#addPanel";a.textContent="लिंक जोड़ें";a.addEventListener("click",()=>{$("addPanel").open=true;$("linkName").focus();});article.appendChild(a);}
+ if(isCustom){const tools=document.createElement("div");tools.className="actions custom-tools";const edit=document.createElement("button");edit.className="btn secondary";edit.textContent="Edit";edit.type="button";edit.onclick=()=>{ $("linkName").value=item.name;$("linkCategory").value=item.category||"Other";$("linkUrl").value=item.url;$("linkDescription").value=item.desc||"";custom.splice(index,1);save();$("addPanel").open=true;window.scrollTo({top:$("addPanel").offsetTop,behavior:"smooth"});};const del=document.createElement("button");del.className="btn danger";del.textContent="Delete";del.type="button";del.onclick=()=>{if(confirm("इस लिंक को हटाएँ?")){custom.splice(index,1);save();render();}};tools.append(edit,del);article.appendChild(tools);}
+ return article;
+}
+function render(){
+ const q=$("search").value.trim().toLowerCase();
+ const main=baseServices.filter(x=>(x.name+" "+x.desc).toLowerCase().includes(q));
+ $("services").replaceChildren(...main.map(x=>card(x)));
+ const filtered=custom.map((x,i)=>({...x,_index:i})).filter(x=>(x.name+" "+x.desc+" "+x.category+" "+x.url).toLowerCase().includes(q));
+ $("customLinks").replaceChildren(...filtered.map(x=>card(x,true,x._index)));
+ if(!filtered.length){const empty=document.createElement("div");empty.className="empty";empty.style.gridColumn="1/-1";empty.textContent=custom.length?"इस खोज से कोई लिंक नहीं मिला।":"अभी कोई अतिरिक्त लिंक नहीं है। ऊपर “नया वेबसाइट लिंक जोड़ें” खोलकर लिंक जोड़ें।";$("customLinks").replaceChildren(empty);}
+ $("serviceCount").textContent=baseServices.length;$("customCount").textContent=custom.length;
+}
+function save(){localStorage.setItem("safs_custom_links",JSON.stringify(custom));}
+$("linkForm").addEventListener("submit",e=>{e.preventDefault();const url=safeUrl($("linkUrl").value.trim());if(!url){alert("कृपया सही http/https वेबसाइट URL डालें।");return;}custom.unshift({name:$("linkName").value.trim(),category:$("linkCategory").value,url,desc:$("linkDescription").value.trim(),emoji:"🔗"});save();render();$("linkForm").reset();alert("लिंक इस ब्राउज़र में सेव हो गया।");});
+$("search").addEventListener("input",render);
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(custom,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="safs-custom-links.json";a.click();URL.revokeObjectURL(a.href);};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data))throw Error();const valid=data.filter(x=>x&&typeof x.name==="string"&&safeUrl(x.url)).map(x=>({name:x.name.slice(0,60),category:String(x.category||"Other"),url:safeUrl(x.url),desc:String(x.desc||"").slice(0,140),emoji:"🔗"}));custom=[...valid,...custom];save();render();alert(valid.length+" लिंक import हुए।");}catch{alert("यह सही JSON link backup file नहीं है।");}e.target.value="";};
+$("clearBtn").onclick=()=>{if(confirm("क्या आप अपने सभी अतिरिक्त लिंक हटाना चाहते हैं? पहले Export कर लें, यदि backup चाहिए।")){custom=[];save();render();}};
+$("year").textContent=new Date().getFullYear();render();
+</script>
+</body>
+</html>
