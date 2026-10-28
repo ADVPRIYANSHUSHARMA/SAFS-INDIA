@@ -1,326 +1,908 @@
-SAFS INDIA SERVICE HUB — ADMIN DASHBOARD UPDATE
-================================================
 
-IMPORTANT SECURITY NOTE
------------------------
-1. A browser-only HTML file must NOT create or set another user's Firebase password directly.
-2. This update uses Firebase's password-reset email flow for an employee instead. The employee chooses their own password using the secure Firebase email link.
-3. A user's status should be set to "suspended" to block dashboard access. Firestore Security Rules must also enforce roles/status; hiding buttons in HTML is not security.
-4. Your existing code stores services in localStorage, so service links are per-browser, not shared across employees.
-
-A. ADD THESE IMPORTS
---------------------
-Add sendPasswordResetEmail if it is not already imported (your pasted code already imports it):
-
-import { sendPasswordResetEmail } from
-  "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-
-B. REPLACE THE EXISTING SIDEBAR HTML
-------------------------------------
-Find: <aside class="sidebar"> ... </aside>
-
-Replace it with:
-
-<aside class="sidebar">
-  <button class="nav-btn active" data-view="services">🏠 Services</button>
-  <button class="nav-btn" data-view="favorites">⭐ Favorites</button>
-  <button class="nav-btn" data-view="add">➕ Add Service</button>
-  <button class="nav-btn" data-view="manage">⚙️ Manage Services</button>
-  <button class="nav-btn" data-view="backup">💾 Import / Export</button>
-  <button class="nav-btn" id="usersNavButton" data-view="users">👥 Users</button>
-  <button class="nav-btn" data-view="account">👤 Manage Account</button>
-</aside>
-
-C. ADD A USERS VIEW
--------------------
-Inside <main>, add this section near the other view sections:
-
-<section id="usersView" class="hidden">
-  <div class="heading-row">
-    <div>
-      <h2>User Management</h2>
-      <p class="muted">View employee details and manage account access.</p>
-    </div>
-    <button class="btn" id="refreshUsersButton" type="button">Refresh Users</button>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><strong id="usersTotal">0</strong><span>Total users</span></div>
-    <div class="stat"><strong id="usersApproved">0</strong><span>Approved</span></div>
-    <div class="stat"><strong id="usersPending">0</strong><span>Pending</span></div>
-    <div class="stat"><strong id="usersSuspended">0</strong><span>Blocked / Suspended</span></div>
-  </div>
-
-  <div class="panel" style="max-width:none">
-    <input id="userSearch" type="search" placeholder="Search by employee name or email">
-    <div id="usersList" style="margin-top:16px">Loading users…</div>
-    <div id="usersMessage" class="message" role="status"></div>
-  </div>
-</section>
-
-<section id="accountView" class="hidden">
-  <h2>Manage Account</h2>
-  <p class="muted">Account details for the currently signed-in user.</p>
-  <div class="panel">
-    <p><strong>Email:</strong> <span id="accountEmail">—</span></p>
-    <p><strong>UID:</strong> <span id="accountUid">—</span></p>
-    <p><strong>Role:</strong> <span id="accountRole">—</span></p>
-    <button class="btn" id="myPasswordResetButton" type="button">Send Password Reset Email</button>
-    <div id="accountMessage" class="message" role="status"></div>
-  </div>
-</section>
-
-D. ADD/REPLACE CSS FOR A MORE PROFESSIONAL LAYOUT
-------------------------------------------------
-Add this near the end of your <style> section:
-
-.layout {
-  grid-template-columns: minmax(0, 1fr) 250px;
-}
-.sidebar {
-  grid-column: 2;
-  grid-row: 1;
-  border-right: 0;
-  border-left: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  height: calc(100vh - 74px);
-  overflow-y: auto;
-}
-main {
-  grid-column: 1;
-  grid-row: 1;
-}
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-.stat {
-  flex: 1;
-}
-.user-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-.user-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-@media (max-width: 760px) {
-  .layout { display: flex; flex-direction: column; }
-  .sidebar {
-    order: 0;
-    position: static;
-    height: auto;
-    border-left: 0;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    overflow-x: auto;
-  }
-  main { order: 1; }
-  .nav-btn { white-space: nowrap; }
-}
-
-E. UPDATE setView()
--------------------
-In the existing setView(view) function, replace the ids object with:
-
-const ids = {
-  services: "servicesView",
-  favorites: "servicesView",
-  add: "addView",
-  manage: "manageView",
-  backup: "backupView",
-  users: "usersView",
-  account: "accountView"
-};
-
-Then, after the existing render calls inside setView(), add:
-
-if (view === "users") loadUsers();
-if (view === "account") renderAccount();
-
-F. ADD THESE JAVASCRIPT FUNCTIONS
----------------------------------
-Add these functions after loadEmployees() or near the other admin functions:
-
-let currentRole = "user";
-let cachedUsers = [];
-
-async function loadUsers() {
-  const list = document.getElementById("usersList");
-  const message = document.getElementById("usersMessage");
-  if (!list || !db || !currentUser) return;
-
-  list.textContent = "Loading users…";
-  message.textContent = "";
-
-  try {
-    // Only the admin should be able to read the profiles collection.
-    const roleSnap = await getDoc(doc(db, "roles", currentUser.uid));
-    if (!roleSnap.exists() || roleSnap.data().role !== "admin") {
-      list.textContent = "Access denied: Admin only.";
-      return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAFS INDIA | Service Hub</title>
+  <style>
+    :root {
+      --primary: #1746a2;
+      --primary-dark: #103477;
+      --bg: #f3f6fc;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --success: #15803d;
     }
 
-    const snapshot = await getDocs(collection(db, "profiles"));
-    cachedUsers = snapshot.docs.map(userDoc => ({
-      uid: userDoc.id,
-      ...userDoc.data()
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input, select { font: inherit; }
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 15px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.secondary { background: #e8eefb; color: var(--primary); }
+    button.danger { background: var(--danger); }
+    button.success { background: var(--success); }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      margin: 6px 0 12px;
+      background: white;
+    }
+    label { font-size: 13px; font-weight: bold; }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 16px #17203308;
+    }
+    .auth-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .auth-card { width: 100%; max-width: 430px; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .brand img { width: 54px; height: 54px; object-fit: contain; }
+    .brand h1 { font-size: 22px; margin: 0 0 4px; }
+    .auth-card h2 { margin-top: 0; }
+    .full { width: 100%; }
+    .auth-switch { display: flex; gap: 8px; margin-bottom: 18px; }
+    .auth-switch button { flex: 1; }
+    .message { font-size: 13px; margin: 12px 0; overflow-wrap: anywhere; }
+
+    .topbar {
+      height: 76px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      gap: 16px;
+    }
+    .topbar .brand { margin: 0; }
+    .topbar .brand img { width: 42px; height: 42px; }
+    .topbar h1 { font-size: 19px; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 245px;
+      min-height: calc(100vh - 125px);
+    }
+    main { padding: 26px; min-width: 0; }
+    aside {
+      background: white;
+      border-left: 1px solid var(--border);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      color: #334155;
+      background: transparent;
+    }
+    .nav-btn:hover, .nav-btn.active { background: #eaf0ff; color: var(--primary); }
+    .nav-label {
+      margin: 16px 10px 5px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .welcome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .welcome h2 { margin: 0 0 6px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-number { font-size: 29px; font-weight: bold; margin-top: 12px; }
+    .stat-title { font-size: 13px; color: var(--muted); }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .section-head h2 { margin: 0; }
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 15px;
+    }
+    .service-card h3 { margin: 0 0 8px; font-size: 16px; }
+    .service-card p { color: var(--muted); font-size: 13px; min-height: 32px; }
+    .service-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .service-actions button { padding: 8px 10px; font-size: 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 650px; }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 13px;
+    }
+    th { background: #f8fafc; }
+    .pill {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 30px;
+      background: #e2e8f0;
+      font-size: 11px;
+    }
+    .pill.approved { color: #166534; background: #dcfce7; }
+    .pill.pending { color: #92400e; background: #fef3c7; }
+    .pill.suspended { color: #991b1b; background: #fee2e2; }
+    .inline-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .inline-form .wide { grid-column: 1 / -1; }
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .row-actions button { padding: 7px 9px; font-size: 11px; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 18px;
+      background: white;
+      border-top: 1px solid var(--border);
+    }
+    .notice {
+      padding: 12px;
+      background: #fff7ed;
+      color: #9a3412;
+      border-radius: 9px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .toolbar input { flex: 1; min-width: 180px; }
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        grid-row: 1;
+        flex-direction: row;
+        flex-wrap: wrap;
+        border-left: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-label { display: none; }
+      .nav-btn { width: auto; }
+    }
+    @media (max-width: 560px) {
+      main { padding: 15px; }
+      .topbar { padding: 10px 14px; }
+      .topbar h1 { font-size: 15px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .card { padding: 15px; }
+      .inline-form { grid-template-columns: 1fr; }
+      .inline-form .wide { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <section id="authScreen" class="auth-wrap">
+    <div class="card auth-card">
+      <div class="brand">
+        <img src="./safs-logo.png" alt="SAFS Logo"
+             onerror="this.style.display='none'">
+        <div>
+          <h1>SAFS INDIA</h1>
+          <div class="muted small">Service Hub · Powered by SAFS Software</div>
+        </div>
+      </div>
+
+      <div class="auth-switch">
+        <button id="showLogin" type="button">Login</button>
+        <button id="showRegister" type="button" class="secondary">Register</button>
+      </div>
+
+      <form id="loginForm">
+        <h2>Welcome Back</h2>
+        <label>Email Address</label>
+        <input id="loginEmail" type="email" required autocomplete="username">
+        <label>Password</label>
+        <input id="loginPassword" type="password" required autocomplete="current-password">
+        <button class="full" type="submit">Login</button>
+        <button class="full secondary" id="googleLogin" type="button" style="margin-top:9px">
+          Continue with Google
+        </button>
+        <button class="full secondary" id="forgotPassword" type="button" style="margin-top:9px">
+          Forgot Password?
+        </button>
+      </form>
+
+      <form id="registerForm" class="hidden">
+        <h2>Create Account</h2>
+        <label>Full Name</label>
+        <input id="registerName" required autocomplete="name">
+        <label>Email Address</label>
+        <input id="registerEmail" type="email" required autocomplete="email">
+        <label>Password</label>
+        <input id="registerPassword" type="password" minlength="8" required autocomplete="new-password">
+        <button class="full" type="submit">Register</button>
+      </form>
+      <div id="authMessage" class="message" role="status"></div>
+    </div>
+  </section>
+
+  <div id="appScreen" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <img src="./safs-logo.png" alt="SAFS Logo" onerror="this.style.display='none'">
+        <div>
+          <h1>SAFS INDIA</h1>
+          <div class="muted small">Service Hub · Powered by SAFS Software</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span id="currentUserLabel" class="muted small"></span>
+        <button id="logoutBtn" class="secondary" type="button">Logout</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <main>
+        <section id="dashboardView">
+          <div class="welcome">
+            <div>
+              <h2 id="welcomeTitle">Dashboard</h2>
+              <div class="muted">Manage your services and quick links.</div>
+            </div>
+            <button type="button" onclick="showView('add')">+ Add Service</button>
+          </div>
+
+          <div class="stats">
+            <div class="card">
+              <div class="stat-title">Total Services</div>
+              <div class="stat-number" id="totalServices">0</div>
+            </div>
+            <div class="card">
+              <div class="stat-title">My Favourites</div>
+              <div class="stat-number" id="totalFavorites">0</div>
+            </div>
+            <div class="card admin-only hidden">
+              <div class="stat-title">Total Users</div>
+              <div class="stat-number" id="totalUsers">0</div>
+            </div>
+            <div class="card admin-only hidden">
+              <div class="stat-title">Pending Users</div>
+              <div class="stat-number" id="pendingUsers">0</div>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2>Service Links</h2>
+            <input id="serviceSearch" placeholder="Search services..." style="max-width:300px">
+          </div>
+          <div id="serviceGrid" class="service-grid"></div>
+        </section>
+
+        <section id="addView" class="hidden">
+          <div class="card">
+            <h2>Add Service Link</h2>
+            <form id="addServiceForm" class="inline-form">
+              <div>
+                <label>Service Name</label>
+                <input id="serviceName" required placeholder="e.g. GST Portal">
+              </div>
+              <div>
+                <label>Category</label>
+                <input id="serviceCategory" required placeholder="e.g. Government">
+              </div>
+              <div class="wide">
+                <label>Website URL (https://)</label>
+                <input id="serviceUrl" type="url" required placeholder="https://example.com">
+              </div>
+              <div class="wide">
+                <label>Description</label>
+                <input id="serviceDescription" placeholder="Short description">
+              </div>
+              <div class="wide">
+                <button type="submit">Save Service</button>
+                <button type="button" class="secondary" onclick="showView('dashboard')">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="usersView" class="hidden">
+          <div class="section-head">
+            <h2>User Management</h2>
+            <button type="button" class="secondary" id="refreshUsers">Refresh</button>
+          </div>
+          <div class="notice">
+            User blocking is enforced through the account status and Firestore rules.
+            Firebase Authentication accounts must also be disabled securely on a trusted backend
+            if you need a complete login block.
+          </div>
+          <div class="card">
+            <div class="toolbar">
+              <input id="userSearch" placeholder="Search name, email or UID...">
+              <select id="userStatusFilter" style="max-width:180px">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name / Email</th>
+                    <th>UID</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr><td colspan="4">Load users to view records.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="accountView" class="hidden">
+          <div class="card">
+            <h2>Manage Account</h2>
+            <p id="accountEmail" class="muted"></p>
+            <button id="accountResetPassword" type="button">Send Password Reset Email</button>
+            <p class="muted small">For security, this sends a reset link instead of displaying or setting another user's password.</p>
+          </div>
+        </section>
+
+        <section id="backupView" class="hidden">
+          <div class="card">
+            <h2>Import / Export Services</h2>
+            <p class="muted">This backup contains services stored in this browser only.</p>
+            <div class="toolbar">
+              <button id="exportBtn" type="button">Export JSON</button>
+              <button id="importBtn" class="secondary" type="button">Import JSON</button>
+              <input id="importFile" type="file" accept=".json,application/json" class="hidden">
+            </div>
+            <p id="backupMessage" class="message"></p>
+          </div>
+        </section>
+      </main>
+
+      <aside>
+        <div class="nav-label">Workspace</div>
+        <button class="nav-btn active" data-view="dashboard">⌂ Dashboard</button>
+        <button class="nav-btn" data-view="add">＋ Add Service</button>
+        <button class="nav-btn" data-view="favorites">★ Favorites</button>
+        <button class="nav-btn" data-view="backup">⇅ Import / Export</button>
+        <div class="nav-label admin-only hidden">Administration</div>
+        <button class="nav-btn admin-only hidden" data-view="users">♙ User Details</button>
+        <button class="nav-btn admin-only hidden" data-view="account">⚙ Manage Account</button>
+      </aside>
+    </div>
+
+    <footer>© 2026 SAFS INDIA · Powered by SAFS Software</footer>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+      createUserWithEmailAndPassword, sendEmailVerification,
+      sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // IMPORTANT: Replace with your existing Firebase project's exact config.
+    const firebaseConfig = {
+      apiKey: "YOUR_EXISTING_API_KEY",
+      authDomain: "safs-afd7a.firebaseapp.com",
+      projectId: "safs-afd7a",
+      storageBucket: "YOUR_EXISTING_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_EXISTING_MESSAGING_SENDER_ID",
+      appId: "YOUR_EXISTING_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let currentRole = "user";
+    let currentProfile = null;
+    let allUsers = [];
+    let currentView = "dashboard";
+
+    const defaultServices = [
+      ["GST Portal", "Government", "https://www.gst.gov.in/", "GST returns and tax services"],
+      ["Income Tax", "Government", "https://www.incometax.gov.in/", "Income tax e-filing"],
+      ["TRACES", "Government", "https://www.tdscpc.gov.in/", "TDS services"],
+      ["Udyam Registration", "Government", "https://udyamregistration.gov.in/", "MSME registration"],
+      ["EPFO", "Government", "https://www.epfindia.gov.in/", "Provident fund services"],
+      ["ESIC", "Government", "https://www.esic.gov.in/", "ESI services"],
+      ["UIDAI", "Government", "https://uidai.gov.in/", "Aadhaar official website"],
+      ["Voter Services", "Government", "https://voters.eci.gov.in/", "Voter services"],
+      ["MCA", "Government", "https://www.mca.gov.in/", "Company affairs"],
+      ["Passport Seva", "Government", "https://www.passportindia.gov.in/", "Passport services"],
+      ["GeM", "Government", "https://gem.gov.in/", "Government e-Marketplace"],
+      ["Protean PAN", "Government", "https://www.protean-tinpan.com/", "PAN services"],
+      ["RBI", "Banking", "https://www.rbi.org.in/", "Reserve Bank of India"],
+      ["Canara Bank", "Banking", "https://canarabank.com/", "Banking services"],
+      ["SBI", "Banking", "https://sbi.co.in/", "State Bank of India"],
+      ["Google Drive", "Productivity", "https://drive.google.com/", "Cloud files"],
+      ["Gmail", "Productivity", "https://mail.google.com/", "Email"],
+      ["Google Sheets", "Productivity", "https://sheets.google.com/", "Spreadsheets"],
+      ["GitHub", "Software", "https://github.com/", "Code hosting"],
+      ["ChatGPT", "AI Tools", "https://chatgpt.com/", "AI assistant"],
+      ["Gemini", "AI Tools", "https://gemini.google.com/", "AI assistant"],
+      ["Canva", "Design", "https://www.canva.com/", "Design tools"],
+      ["Microsoft 365", "Productivity", "https://www.microsoft365.com/", "Office apps"]
+    ].map((s, i) => ({
+      id: "default-" + i, name: s[0], category: s[1], url: s[2],
+      description: s[3], isDefault: true
     }));
 
-    document.getElementById("usersTotal").textContent = cachedUsers.length;
-    document.getElementById("usersApproved").textContent =
-      cachedUsers.filter(u => u.status === "approved").length;
-    document.getElementById("usersPending").textContent =
-      cachedUsers.filter(u => !u.status || u.status === "pending").length;
-    document.getElementById("usersSuspended").textContent =
-      cachedUsers.filter(u => u.status === "suspended").length;
+    let services = [];
+    let favorites = JSON.parse(localStorage.getItem("safsFavorites") || "[]");
 
-    renderUsersList();
-  } catch (error) {
-    console.error("User list error:", error);
-    list.textContent = "Could not load users. Check Firestore Security Rules.";
-  }
-}
+    const $ = id => document.getElementById(id);
+    const showMessage = (id, message, isError = false) => {
+      const el = $(id);
+      el.textContent = message;
+      el.style.color = isError ? "#dc2626" : "#15803d";
+    };
 
-function renderUsersList() {
-  const list = document.getElementById("usersList");
-  const query = (document.getElementById("userSearch")?.value || "").trim().toLowerCase();
-  const visible = cachedUsers.filter(user =>
-    String(user.displayName || "").toLowerCase().includes(query) ||
-    String(user.email || "").toLowerCase().includes(query) ||
-    String(user.uid || "").toLowerCase().includes(query)
-  );
-
-  if (!visible.length) {
-    list.textContent = "No matching users found.";
-    return;
-  }
-
-  list.innerHTML = "";
-  visible.forEach(user => {
-    const row = document.createElement("div");
-    row.className = "user-row";
-
-    const details = document.createElement("div");
-    details.style.minWidth = "220px";
-    const name = document.createElement("strong");
-    name.textContent = user.displayName || "Employee";
-    const info = document.createElement("div");
-    info.className = "muted";
-    info.textContent = `${user.email || "No email"} · Status: ${user.status || "pending"} · UID: ${user.uid}`;
-    details.append(name, info);
-
-    const actions = document.createElement("div");
-    actions.className = "user-actions";
-
-    const statusButton = document.createElement("button");
-    statusButton.className = "btn btn-secondary";
-    statusButton.textContent = user.status === "suspended" ? "Unblock" :
-      (user.status === "approved" ? "Block" : "Approve");
-    statusButton.addEventListener("click", () => {
-      const nextStatus = user.status === "suspended" ? "approved" :
-        (user.status === "approved" ? "suspended" : "approved");
-      changeEmployeeStatus(user.uid, nextStatus).then(loadUsers);
+    $("showLogin").addEventListener("click", () => {
+      $("loginForm").classList.remove("hidden");
+      $("registerForm").classList.add("hidden");
+      $("showLogin").classList.remove("secondary");
+      $("showRegister").classList.add("secondary");
+      showMessage("authMessage", "");
     });
 
-    const resetButton = document.createElement("button");
-    resetButton.className = "btn";
-    resetButton.textContent = "Password Reset";
-    resetButton.addEventListener("click", async () => {
-      const email = String(user.email || "").trim();
+    $("showRegister").addEventListener("click", () => {
+      $("registerForm").classList.remove("hidden");
+      $("loginForm").classList.add("hidden");
+      $("showRegister").classList.remove("secondary");
+      $("showLogin").classList.add("secondary");
+      showMessage("authMessage", "");
+    });
+
+    $("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+        showMessage("authMessage", "Login successful. Checking your account...");
+      } catch (error) {
+        showMessage("authMessage", error.message, true);
+      }
+    });
+
+    $("registerForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const name = $("registerName").value.trim();
+        const email = $("registerEmail").value.trim();
+        const credential = await createUserWithEmailAndPassword(auth, email, $("registerPassword").value);
+        await setDoc(doc(db, "profiles", credential.user.uid), {
+          name, email, status: "pending", createdAt: new Date().toISOString()
+        });
+        await sendEmailVerification(credential.user);
+        showMessage("authMessage", "Registration submitted. Verify your email and wait for admin approval.");
+        await signOut(auth);
+      } catch (error) {
+        showMessage("authMessage", error.message, true);
+      }
+    });
+
+    $("googleLogin").addEventListener("click", async () => {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const profileRef = doc(db, "profiles", result.user.uid);
+        const profileSnap = await getDoc(profileRef);
+        if (!profileSnap.exists()) {
+          await setDoc(profileRef, {
+            name: result.user.displayName || "",
+            email: result.user.email || "",
+            status: "pending",
+            createdAt: new Date().toISOString()
+          });
+          await signOut(auth);
+          showMessage("authMessage", "Profile created. Ask admin to approve your account.");
+        }
+      } catch (error) {
+        showMessage("authMessage", error.message, true);
+      }
+    });
+
+    $("forgotPassword").addEventListener("click", async () => {
+      const email = $("loginEmail").value.trim();
       if (!email) {
-        document.getElementById("usersMessage").textContent = "This user has no email address.";
+        showMessage("authMessage", "Enter your email address first.", true);
         return;
       }
       try {
         await sendPasswordResetEmail(auth, email);
-        document.getElementById("usersMessage").textContent =
-          "Password-reset email requested for " + email + ". The employee must use the email link to choose a new password.";
-        document.getElementById("usersMessage").className = "message success";
+        showMessage("authMessage", "If the account exists, a password reset email has been sent.");
       } catch (error) {
-        console.error(error);
-        document.getElementById("usersMessage").textContent =
-          "Could not request password reset. Check Firebase Auth settings and try again.";
-        document.getElementById("usersMessage").className = "message error";
+        showMessage("authMessage", error.message, true);
       }
     });
 
-    actions.append(statusButton, resetButton);
-    row.append(details, actions);
-    list.appendChild(row);
-  });
-}
+    $("logoutBtn").addEventListener("click", () => signOut(auth));
+    $("accountResetPassword").addEventListener("click", async () => {
+      if (!currentUser?.email) return;
+      try {
+        await sendPasswordResetEmail(auth, currentUser.email);
+        alert("Password reset email requested.");
+      } catch (error) {
+        alert(error.message);
+      }
+    });
 
-function renderAccount() {
-  if (!currentUser) return;
-  document.getElementById("accountEmail").textContent = currentUser.email || "—";
-  document.getElementById("accountUid").textContent = currentUser.uid || "—";
-  document.getElementById("accountRole").textContent = currentRole;
-}
+    function showView(view) {
+      if (["users", "account"].includes(view) && currentRole !== "admin") {
+        alert("Admin access required.");
+        return;
+      }
+      currentView = view;
+      const viewIds = {
+        dashboard: "dashboardView", favorites: "dashboardView",
+        add: "addView", users: "usersView", account: "accountView",
+        backup: "backupView"
+      };
+      Object.values(viewIds).forEach(id => $(id).classList.add("hidden"));
+      $(viewIds[view] || "dashboardView").classList.remove("hidden");
+      document.querySelectorAll(".nav-btn").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === view);
+      });
+      if (view === "favorites") renderServices(true);
+      else if (view === "dashboard") renderServices(false);
+      if (view === "users") loadUsers();
+      if (view === "account") renderAccount();
+    }
+    window.showView = showView;
 
-document.getElementById("userSearch")?.addEventListener("input", renderUsersList);
-document.getElementById("refreshUsersButton")?.addEventListener("click", loadUsers);
+    document.querySelectorAll(".nav-btn").forEach(button => {
+      button.addEventListener("click", () => showView(button.dataset.view));
+    });
 
-document.getElementById("myPasswordResetButton")?.addEventListener("click", async () => {
-  const message = document.getElementById("accountMessage");
-  try {
-    if (!currentUser?.email) throw new Error("No email address found for this account.");
-    await sendPasswordResetEmail(auth, currentUser.email);
-    message.className = "message success";
-    message.textContent = "Password-reset email requested. Check your inbox.";
-  } catch (error) {
-    message.className = "message error";
-    message.textContent = error.message || "Could not send reset email.";
-  }
-});
+    function loadServices() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("safsServices") || "null");
+        services = Array.isArray(saved) ? saved : [...defaultServices];
+      } catch {
+        services = [...defaultServices];
+      }
+      renderServices(false);
+    }
 
-G. SET THE ROLE WHEN VERIFYING THE SIGNED-IN USER
--------------------------------------------------
-Inside onAuthStateChanged(), immediately after this line:
+    function saveServices() {
+      localStorage.setItem("safsServices", JSON.stringify(services));
+      $("totalServices").textContent = services.length;
+      $("totalFavorites").textContent = favorites.length;
+    }
 
-const roleSnap = await getDoc(doc(db, "roles", freshUser.uid));
+    function renderServices(onlyFavorites = false) {
+      const search = ($("serviceSearch").value || "").toLowerCase();
+      const list = services.filter(service => {
+        const favoriteMatch = !onlyFavorites || favorites.includes(service.id);
+        const searchMatch = [service.name, service.category, service.description]
+          .join(" ").toLowerCase().includes(search);
+        return favoriteMatch && searchMatch;
+      });
+      $("serviceGrid").innerHTML = "";
+      if (!list.length) {
+        $("serviceGrid").textContent = "No services found.";
+      }
+      list.forEach(service => {
+        const card = document.createElement("div");
+        card.className = "card service-card";
+        const title = document.createElement("h3");
+        title.textContent = service.name;
+        const category = document.createElement("span");
+        category.className = "pill";
+        category.textContent = service.category || "General";
+        const desc = document.createElement("p");
+        desc.textContent = service.description || "Open this service.";
+        const actions = document.createElement("div");
+        actions.className = "service-actions";
+        const open = document.createElement("button");
+        open.textContent = "Open Website";
+        open.addEventListener("click", () => {
+          const url = safeUrl(service.url);
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
+        });
+        const fav = document.createElement("button");
+        fav.className = "secondary";
+        fav.textContent = favorites.includes(service.id) ? "★ Saved" : "☆ Favorite";
+        fav.addEventListener("click", () => {
+          favorites = favorites.includes(service.id)
+            ? favorites.filter(id => id !== service.id) : [...favorites, service.id];
+          localStorage.setItem("safsFavorites", JSON.stringify(favorites));
+          saveServices();
+          renderServices(currentView === "favorites");
+        });
+        actions.append(open, fav);
+        if (currentRole === "admin" && !service.isDefault) {
+          const remove = document.createElement("button");
+          remove.className = "danger";
+          remove.textContent = "Remove";
+          remove.addEventListener("click", () => {
+            if (confirm("Remove this service link?")) {
+              services = services.filter(item => item.id !== service.id);
+              saveServices();
+              renderServices(currentView === "favorites");
+            }
+          });
+          actions.append(remove);
+        }
+        card.append(title, category, desc, actions);
+        $("serviceGrid").append(card);
+      });
+      saveServices();
+    }
 
-Add:
+    function safeUrl(value) {
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+      } catch { return null; }
+    }
 
-currentRole = roleSnap.exists() ? (roleSnap.data().role || "user") : "user";
+    $("serviceSearch").addEventListener("input", () => renderServices(currentView === "favorites"));
 
-Keep your existing Admin check after that. Admin users should have a document:
-Collection: roles
-Document ID: the admin's Firebase Authentication UID
-Field: role
-Value: admin
+    $("addServiceForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const url = safeUrl($("serviceUrl").value.trim());
+      if (!url) {
+        alert("Enter a valid http or https URL.");
+        return;
+      }
+      services.push({
+        id: "custom-" + Date.now(),
+        name: $("serviceName").value.trim(),
+        category: $("serviceCategory").value.trim(),
+        url,
+        description: $("serviceDescription").value.trim(),
+        isDefault: false
+      });
+      saveServices();
+      event.target.reset();
+      alert("Service added to this browser.");
+      showView("dashboard");
+    });
 
-For normal employees, use role="user" (or no roles document if your app checks profiles for regular users). Never let users choose their own role in the registration form.
+    async function loadUsers() {
+      if (currentRole !== "admin") return;
+      $("usersTableBody").innerHTML = "<tr><td colspan='4'>Loading users...</td></tr>";
+      try {
+        const snapshot = await getDocs(collection(db, "profiles"));
+        allUsers = snapshot.docs.map(item => ({ uid: item.id, ...item.data() }));
+        $("totalUsers").textContent = allUsers.length;
+        $("pendingUsers").textContent = allUsers.filter(user => user.status === "pending").length;
+        renderUsersList();
+      } catch (error) {
+        $("usersTableBody").innerHTML = "";
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 4;
+        cell.textContent = "Could not load users: " + error.message;
+        row.append(cell);
+        $("usersTableBody").append(row);
+      }
+    }
 
-H. IMPORTANT FIRESTORE RULES
-----------------------------
-The dashboard code alone cannot securely protect employee records. Use Firestore Security Rules that:
-- allow a signed-in user to read their own profile;
-- allow a user to create only their own profile with status "pending";
-- allow only an admin to read all profiles and change employee status;
-- prevent ordinary users from writing documents in the roles collection;
-- allow only an admin to manage role documents.
+    function renderUsersList() {
+      const query = $("userSearch").value.toLowerCase().trim();
+      const filter = $("userStatusFilter").value;
+      const filtered = allUsers.filter(user => {
+        const matches = [user.name, user.email, user.uid].join(" ").toLowerCase().includes(query);
+        return matches && (filter === "all" || (user.status || "pending") === filter);
+      });
+      const body = $("usersTableBody");
+      body.innerHTML = "";
+      if (!filtered.length) {
+        body.innerHTML = "<tr><td colspan='4'>No users found.</td></tr>";
+        return;
+      }
+      filtered.forEach(user => {
+        const row = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        nameCell.textContent = (user.name || "Unnamed") + "\n" + (user.email || "");
+        const uidCell = document.createElement("td");
+        uidCell.textContent = user.uid;
+        const statusCell = document.createElement("td");
+        const status = user.status || "pending";
+        const badge = document.createElement("span");
+        badge.className = "pill " + status;
+        badge.textContent = status;
+        statusCell.append(badge);
+        const actionsCell = document.createElement("td");
+        const actions = document.createElement("div");
+        actions.className = "row-actions";
 
-Do not use open rules such as `allow read, write: if true;`.
-Do not paste service-account private keys into HTML.
-For a stronger setup, create/disable Firebase Authentication users through a trusted Cloud Function using the Firebase Admin SDK. This is required if you want the Admin to directly create an account and assign an initial password. The browser-only approach above safely sends a reset email instead.
+        if (user.uid !== currentUser.uid) {
+          const approve = document.createElement("button");
+          approve.className = "success";
+          approve.textContent = "Approve";
+          approve.addEventListener("click", () => updateUserStatus(user.uid, "approved"));
 
-I. FOOTER
----------
-Replace your current footer text with:
+          const suspend = document.createElement("button");
+          suspend.className = "danger";
+          suspend.textContent = status === "suspended" ? "Reactivate" : "Block";
+          suspend.addEventListener("click", () =>
+            updateUserStatus(user.uid, status === "suspended" ? "approved" : "suspended")
+          );
 
-<footer>© 2026 SAFS INDIA · Service Hub · Powered by SAFS Software</footer>
+          const reset = document.createElement("button");
+          reset.className = "secondary";
+          reset.textContent = "Password Reset";
+          reset.addEventListener("click", async () => {
+            if (!user.email) return alert("User email is missing.");
+            try {
+              await sendPasswordResetEmail(auth, user.email);
+              alert("Password reset email requested for " + user.email);
+            } catch (error) { alert(error.message); }
+          });
+          actions.append(approve, suspend, reset);
+        } else {
+          actions.textContent = "Current account";
+        }
+        actionsCell.append(actions);
+        row.append(nameCell, uidCell, statusCell, actionsCell);
+        body.append(row);
+      });
+    }
 
-J. SERVICE DATA NOTE
---------------------
-Your existing services are stored in localStorage. This means each employee's links/favorites are separate on each browser/device. To share the same services among all employees, move the services collection into Firestore and secure writes so only admins can add/edit/remove shared links.
+    async function updateUserStatus(uid, status) {
+      if (currentRole !== "admin" || uid === currentUser.uid) {
+        alert("This action is not allowed.");
+        return;
+      }
+      try {
+        await updateDoc(doc(db, "profiles", uid), { status });
+        await loadUsers();
+      } catch (error) {
+        alert("Could not update status: " + error.message +
+          ". Check Firestore security rules.");
+      }
+    }
+
+    function renderAccount() {
+      $("accountEmail").textContent = currentUser?.email || "";
+    }
+
+    $("userSearch").addEventListener("input", renderUsersList);
+    $("userStatusFilter").addEventListener("change", renderUsersList);
+    $("refreshUsers").addEventListener("click", loadUsers);
+
+    $("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(services, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "safs-services-backup.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      showMessage("backupMessage", "Export started.");
+    });
+
+    $("importBtn").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (!Array.isArray(parsed) || !parsed.every(item =>
+          item && typeof item.name === "string" &&
+          typeof item.url === "string" && safeUrl(item.url)
+        )) {
+          throw new Error("Invalid backup format.");
+        }
+        if (!confirm("Replace the current local services with this backup?")) return;
+        services = parsed;
+        saveServices();
+        renderServices(false);
+        showMessage("backupMessage", "Import successful.");
+      } catch (error) {
+        showMessage("backupMessage", "Import failed: " + error.message, true);
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        currentUser = null;
+        $("appScreen").classList.add("hidden");
+        $("authScreen").classList.remove("hidden");
+        return;
+      }
+
+      try {
+        currentUser = user;
+        const roleSnap = await getDoc(doc(db, "roles", user.uid));
+        currentRole = roleSnap.exists() && roleSnap.data().role === "admin" ? "admin" : "user";
+
+        const profileRef = doc(db, "profiles", user.uid);
+        const profileSnap = await getDoc(profileRef);
+        currentProfile = profileSnap.exists() ? profileSnap.data() : null;
+
+        if (currentRole !== "admin") {
+          if (!user.emailVerified) {
+            await signOut(auth);
+            showMessage("authMessage", "Please verify your email before logging in.", true);
+            return;
+          }
+          if (!currentProfile || currentProfile.status !== "approved") {
+            await signOut(auth);
+            showMessage("authMessage",
+              currentProfile?.status === "suspended"
+                ? "Your account is blocked. Contact your administrator."
+                : "Your account is waiting for admin approval.", true);
+            return;
+          }
+        }
+
+        $("authScreen").classList.add("hidden");
+        $("appScreen").classList.remove("hidden");
+        $("currentUserLabel").textContent = user.email || "";
+        $("welcomeTitle").textContent = "Welcome, " +
+          (currentProfile?.name || user.displayName || "User");
+        $("accountEmail").textContent = user.email || "";
+
+        document.querySelectorAll(".admin-only").forEach(el => {
+          el.classList.toggle("hidden", currentRole !== "admin");
+        });
+        loadServices();
+        if (currentRole === "admin") loadUsers();
+        showView("dashboard");
+      } catch (error) {
+        await signOut(auth);
+        showMessage("authMessage", "Account/role verification failed: " + error.message, true);
+      }
+    });
+  </script>
+</body>
+</html>
