@@ -1,0 +1,1268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
+<title>SAFS INDIA | Service Hub</title>
+
+<style>
+:root {
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --text:#172033;
+  --muted:#65718a;
+  --primary:#2457e6;
+  --border:#e1e7f0;
+  --danger:#d93040;
+}
+*{box-sizing:border-box}
+
+html {
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-y: auto;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.hidden{display:none!important}
+#authLoading{
+  position:fixed;inset:0;background:#101827;color:white;
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999
+}
+#loginGate{
+  position:fixed;inset:0;background:#101827;
+  display:flex;align-items:center;justify-content:center;
+  padding:18px;z-index:9998
+}
+.login-card{
+  background:white;color:#172033;width:100%;max-width:420px;
+  padding:30px;border-radius:18px;box-shadow:0 20px 60px #0005
+}
+.brand-mark{
+  width:54px;height:54px;border-radius:15px;background:#2457e6;
+  color:white;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:20px;margin-bottom:15px
+}
+.login-card h1{margin:0 0 8px;font-size:25px}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+.field{display:block;margin:16px 0 6px;font-size:13px;font-weight:700}
+input,select{
+  width:100%;padding:12px;border:1px solid var(--border);
+  border-radius:9px;background:white;color:var(--text);outline:none
+}
+input:focus,select:focus{border-color:var(--primary)}
+.btn{
+  padding:11px 15px;border:0;border-radius:9px;
+  background:var(--primary);color:white;font-weight:700
+}
+.btn-secondary{background:#e9eefb;color:#203d91}
+.btn-danger{background:#fff0f1;color:var(--danger)}
+.btn-full{width:100%;margin-top:18px}
+.message{font-size:13px;margin-top:12px;line-height:1.5}
+.error{color:var(--danger)}
+.success{color:#147d42}
+#app{min-height:100vh}
+.topbar{
+  background:#101827;color:white;padding:15px 22px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap
+}
+.brand{font-size:20px;font-weight:800;letter-spacing:.3px}
+.brand small{display:block;font-size:11px;color:#b6c4df;margin-top:4px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top-actions button{padding:9px 12px;border:0;border-radius:8px}
+.user-email{font-size:12px;color:#d7e0f4;overflow-wrap:anywhere}
+.layout{display:grid;grid-template-columns:235px minmax(0,1fr);min-height:calc(100vh - 74px)}
+.sidebar{background:white;border-right:1px solid var(--border);padding:20px}
+.nav-btn{
+  display:block;width:100%;text-align:left;border:0;background:transparent;
+  padding:12px;border-radius:9px;color:var(--text);margin-bottom:5px
+}
+.nav-btn.active,.nav-btn:hover{background:#eaf0ff;color:var(--primary)}
+.sidebar-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:24px}
+main{padding:25px;min-width:0}
+.heading-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h2{margin:0 0 8px;font-size:24px}
+.toolbar{display:grid;grid-template-columns:minmax(180px,1fr) 210px;gap:10px;margin:22px 0}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
+.stat{background:white;border:1px solid var(--border);border-radius:12px;padding:14px 18px;min-width:125px}
+.stat strong{display:block;font-size:22px;margin-bottom:4px}
+.stat span{font-size:12px;color:var(--muted)}
+.service-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.service-card{
+  background:white;border:1px solid var(--border);border-radius:13px;
+  padding:17px;display:flex;flex-direction:column;min-height:175px;
+  transition:transform .15s,box-shadow .15s
+}
+.service-card:hover{transform:translateY(-2px);box-shadow:0 8px 25px #1a2b4b12}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.service-icon{
+  width:42px;height:42px;border-radius:11px;background:#edf2ff;
+  display:flex;align-items:center;justify-content:center;font-size:20px
+}
+.category{font-size:11px;color:var(--primary);font-weight:700;margin:12px 0 5px}
+.service-card h3{font-size:16px;margin:0 0 7px}
+.description{font-size:12px;color:var(--muted);line-height:1.5;flex:1}
+.card-actions{display:flex;gap:8px;margin-top:14px}
+.card-actions a,.card-actions button{
+  text-decoration:none;border:0;border-radius:8px;padding:9px 11px;
+  font-size:12px;font-weight:700
+}
+.open-link{background:var(--primary);color:white;flex:1;text-align:center}
+.fav-btn{background:#f1f4f9;color:#34415a}
+.star{font-size:20px;color:#e5a100;line-height:1}
+.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:20px;max-width:700px}
+.panel h3{margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}
+.form-grid .full{grid-column:1/-1}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.empty{
+  background:white;border:1px dashed #c8d2e3;border-radius:12px;
+  padding:35px;text-align:center;color:var(--muted)
+}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{border-right:0;border-bottom:1px solid var(--border);padding:10px;display:flex;gap:5px;overflow-x:auto}
+  .nav-btn{white-space:nowrap;width:auto;margin:0}
+  .sidebar-note{display:none}
+  main{padding:16px}
+  .toolbar{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid .full{grid-column:auto}
+  .topbar{padding:14px}
+}
+  
+/* LOGIN AND REGISTRATION LAYOUT */
+.login-card {
+  background: #ffffff;
+  color: #172033;
+  width: 100%;
+  max-width: 920px;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px #0005;
+  margin: auto;
+  flex-shrink: 0;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.auth-header h1 {
+  margin-bottom: 8px;
+}
+
+.auth-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.auth-panel {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #e1e7f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.auth-panel h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.auth-panel input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+
+.auth-panel .btn-full {
+  width: 100%;
+}
+
+#loginGate {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* MOBILE RESPONSIVE DESIGN */
+@media (max-width: 700px) {
+  #loginGate {
+    align-items: flex-start;
+  }
+
+  .login-card {
+    padding: 18px;
+  }
+
+  .auth-columns {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .auth-panel {
+    padding: 18px;
+  }
+}
+  .safs-logo {
+  display: block;
+  width: 150px;
+  height: 150px;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 0 auto 12px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.auth-header .muted {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="authLoading">Checking secure login…</div>
+
+<section id="loginGate" class="hidden">
+  <div class="login-card">
+
+    <div class="auth-header">
+  <img
+    src="./safs-logo.png"
+    alt="SAFS INDIA Logo"
+    class="safs-logo"
+  >
+  <p class="muted">Service Hub · Powered by SAFS Software</p>
+</div>
+
+    <div class="auth-columns">
+
+      <!-- LEFT SIDE: SIGN IN -->
+      <div class="auth-panel">
+        <h3>Sign In to Continue</h3>
+        <p class="muted">
+          Sign in using your registered email and password.
+        </p>
+
+        <form id="loginForm">
+          <label class="field" for="loginEmail">
+            Email Address
+          </label>
+          <input
+            id="loginEmail"
+            type="email"
+            autocomplete="username"
+            placeholder="you@example.com"
+            required
+          >
+
+          <label class="field" for="loginPassword">
+            Password
+          </label>
+          <input
+            id="loginPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Enter password"
+            required
+          >
+
+          <button
+            id="loginButton"
+            class="btn btn-full"
+            type="submit"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <button
+          id="forgotPassword"
+          class="btn btn-secondary btn-full"
+          type="button"
+        >
+          Reset Forgotten Password
+        </button>
+
+        <div
+          id="authMessage"
+          class="message"
+          role="status"
+        ></div>
+      </div>
+
+      <!-- RIGHT SIDE: CREATE NEW ACCOUNT -->
+      <div class="auth-panel">
+        <h3>Create New Account</h3>
+        <p class="muted">
+          Register a new employee account.
+          Admin approval may be required.
+        </p>
+
+        <form id="registerForm">
+          <label class="field" for="employeeName">
+            Employee Name
+          </label>
+          <input
+            id="employeeName"
+            maxlength="80"
+            placeholder="Enter employee name"
+            required
+          >
+
+          <label class="field" for="registerEmail">
+            Email / Login ID
+          </label>
+          <input
+            id="registerEmail"
+            type="email"
+            placeholder="employee@example.com"
+            required
+          >
+
+          <label class="field" for="registerPassword">
+            Password
+          </label>
+          <input
+            id="registerPassword"
+            type="password"
+            minlength="6"
+            autocomplete="new-password"
+            placeholder="Create password"
+            required
+          >
+
+          <button
+            id="registerButton"
+            class="btn btn-full"
+            type="submit"
+          >
+            Create Employee Account
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand">
+      SAFS INDIA
+      <small>Service Hub · Powered by SAFS Software</small>
+    </div>
+    <div class="top-actions">
+      <span id="userEmail" class="user-email"></span>
+      <button id="exportButton" class="btn-secondary">Export Backup</button>
+      <button id="logoutButton" class="btn-danger">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <button class="nav-btn active" data-view="services">🏠 All Services</button>
+      <button class="nav-btn" data-view="favorites">⭐ Favorites</button>
+      <button class="nav-btn" data-view="add">➕ Add Service</button>
+      <button class="nav-btn" data-view="manage">⚙️ Manage Services</button>
+      <button class="nav-btn" data-view="backup">💾 Import / Export</button>
+      <div class="sidebar-note">
+        Keep your important work links in one place.<br><br>
+        Only add links you trust. Check the website address before entering customer information.
+      </div>
+    </aside>
+
+    
+<main>
+  <section id="adminPanel" class="hidden"
+    style="background:white;padding:20px;margin-bottom:20px;border:1px solid #e1e7f0;border-radius:12px">
+
+    <h2>Employee Management</h2>
+    <p class="muted">Approve or suspend employee accounts.</p>
+
+    <div id="employeeList">Loading employees...</div>
+    <div id="adminMessage" class="message" role="status"></div>
+  </section>
+
+  <section id="servicesView">
+    <div class="heading-row">
+      <div>
+        <h2 id="pageTitle">All Services</h2>
+        <div class="muted">Quick access to your daily work websites.</div>
+      </div>
+      <button class="btn" id="addServiceShortcut">+ Add Service</button>
+    </div>
+
+        <div class="stats">
+          <div class="stat"><strong id="totalCount">0</strong><span>Total services</span></div>
+          <div class="stat"><strong id="favoriteCount">0</strong><span>Favorites</span></div>
+          <div class="stat"><strong id="customCount">0</strong><span>Custom links</span></div>
+        </div>
+
+        <div class="toolbar">
+          <input id="searchInput" type="search" placeholder="Search services…">
+          <select id="categoryFilter" aria-label="Filter by category">
+            <option value="All">All categories</option>
+          </select>
+        </div>
+
+        <div id="serviceGrid" class="service-grid"></div>
+      </section>
+
+      <section id="addView" class="hidden">
+        <h2 id="formHeading">Add a Service</h2>
+        <p class="muted">Add a website shortcut for this browser.</p>
+        <div class="panel">
+          <form id="serviceForm">
+            <input id="serviceId" type="hidden">
+            <div class="form-grid">
+              <div>
+                <label class="field" for="serviceName">Service name *</label>
+                <input id="serviceName" maxlength="80" required placeholder="Example: GST Portal">
+              </div>
+              <div>
+                <label class="field" for="serviceCategory">Category *</label>
+                <select id="serviceCategory" required>
+                  <option>Government</option>
+                  <option>Tax</option>
+                  <option>Banking</option>
+                  <option>Office</option>
+                  <option>AI Tools</option>
+                  <option>Design</option>
+                  <option>Development</option>
+                  <option>Computer Support</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="full">
+                <label class="field" for="serviceUrl">Website URL *</label>
+                <input id="serviceUrl" type="url" required placeholder="https://example.gov.in">
+              </div>
+              <div class="full">
+                <label class="field" for="serviceDescription">Description</label>
+                <input id="serviceDescription" maxlength="180" placeholder="Short description">
+              </div>
+              <div>
+                <label class="field" for="serviceIcon">Icon / Emoji</label>
+                <input id="serviceIcon" maxlength="8" placeholder="🌐">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn">Save Service</button>
+              <button type="button" id="cancelEdit" class="btn btn-secondary">Clear Form</button>
+            </div>
+            <div id="formMessage" class="message" role="status"></div>
+          </form>
+        </div>
+      </section>
+
+      <section id="manageView" class="hidden">
+        <h2>Manage Services</h2>
+        <p class="muted">Edit or remove links saved in this browser.</p>
+        <div id="manageList"></div>
+      </section>
+
+      <section id="backupView" class="hidden">
+        <h2>Import / Export</h2>
+        <p class="muted">Create a JSON backup or restore services from a backup file.</p>
+        <div class="panel">
+          <h3>Export backup</h3>
+          <p class="muted">Downloads the service links stored in this browser.</p>
+          <button id="exportButton2" class="btn">Download JSON Backup</button>
+          <hr style="border:0;border-top:1px solid var(--border);margin:24px 0">
+          <h3>Import backup</h3>
+          <label class="field" for="importFile">Choose SAFS JSON backup</label>
+          <input id="importFile" type="file" accept=".json,application/json">
+          <div class="form-actions">
+            <button id="importButton" class="btn">Import Backup</button>
+          </div>
+          <div id="backupMessage" class="message" role="status"></div>
+        </div>
+      </section>
+
+      <footer>SAFS INDIA Service Hub · Powered by SAFS Software</footer>
+    </main>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+
+
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  onAuthStateChanged,
+  signOut,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  getDocs,
+  updateDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+
+/* =====================================================
+   STEP 1: REPLACE THESE VALUES WITH YOUR FIREBASE WEB APP
+   Firebase Console > Project settings > Your apps
+   Never put a service-account private key in this file.
+===================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCnZg6gCr9iacFAmEcUGZv_FLAU12ILZQI",
+  authDomain: "safs-afd7a.firebaseapp.com",
+  projectId: "safs-afd7a",
+  storageBucket: "safs-afd7a.firebasestorage.app",
+  messagingSenderId: "922686964839",
+  appId: "1:922686964839:web:3ae96925f3be65965a40c2",
+};
+
+const $ = id => document.getElementById(id);
+
+const authGate = $("loginGate");
+const authLoading = $("authLoading");
+const appShell = $("app");
+const authMessage = $("authMessage");
+
+let auth = null;
+  let db = null;
+let currentUser = null;
+
+function showAuthMessage(message, type = "error") {
+  authMessage.className = "message " + type;
+  authMessage.textContent = message;
+}
+
+function explainAuthError(error) {
+  const code = error?.code || "";
+  const messages = {
+    "auth/invalid-email": "Email address is not valid.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/user-not-found": "No account found for this email.",
+    "auth/wrong-password": "Email or password is incorrect.",
+    "auth/too-many-requests": "Too many attempts. Please wait and try again.",
+    "auth/network-request-failed": "Network error. Check your internet connection.",
+    "auth/user-disabled": "This account has been disabled.",
+    "auth/operation-not-allowed": "Enable Email/Password sign-in in Firebase Console."
+  };
+  return messages[code] || ("Login failed: " + (error?.message || "Please try again."));
+}
+
+function showLogin() {
+  authLoading.classList.add("hidden");
+  appShell.classList.add("hidden");
+  authGate.classList.remove("hidden");
+}
+
+function showDashboard(user) {
+  currentUser = user;
+  $("userEmail").textContent = user.email || "Signed in";
+  authGate.classList.add("hidden");
+  authLoading.classList.add("hidden");
+  appShell.classList.remove("hidden");
+  renderAll();
+}
+    
+async function loadEmployees() {
+  const list = $("employeeList");
+  const message = $("adminMessage");
+
+  list.textContent = "Loading employees...";
+  message.textContent = "";
+
+  try {
+    const snapshot = await getDocs(collection(db, "profiles"));
+
+    if (snapshot.empty) {
+      list.textContent = "No employee accounts found.";
+      return;
+    }
+
+    list.innerHTML = "";
+
+    snapshot.forEach(employeeDoc => {
+      const employee = employeeDoc.data();
+      const uid = employeeDoc.id;
+
+      const row = document.createElement("div");
+      row.style.cssText =
+        "padding:12px;border-bottom:1px solid #e1e7f0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap";
+
+      const details = document.createElement("div");
+      details.textContent =
+        (employee.displayName || "Employee") +
+        " — " + (employee.email || "No email") +
+        " — Status: " + (employee.status || "pending");
+
+      const actions = document.createElement("div");
+
+      const approveButton = document.createElement("button");
+      approveButton.className = "btn";
+      approveButton.textContent = "Approve";
+      approveButton.addEventListener("click", () => {
+        changeEmployeeStatus(uid, "approved");
+      });
+
+      const suspendButton = document.createElement("button");
+      suspendButton.className = "btn btn-danger";
+      suspendButton.style.marginLeft = "8px";
+      suspendButton.textContent = "Suspend";
+      suspendButton.addEventListener("click", () => {
+        changeEmployeeStatus(uid, "suspended");
+      });
+
+      actions.append(approveButton, suspendButton);
+      row.append(details, actions);
+      list.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Could not load employees:", error);
+    list.textContent = "Could not load employees. Check Firestore permissions.";
+  }
+}
+
+async function changeEmployeeStatus(uid, status) {
+  const message = $("adminMessage");
+
+  if (!currentUser || !["approved", "suspended"].includes(status)) {
+    message.textContent = "Invalid request.";
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "profiles", uid), {
+      status,
+      updatedAt: serverTimestamp()
+    });
+
+    message.textContent =
+      status === "approved"
+        ? "Employee approved successfully."
+        : "Employee suspended successfully.";
+
+    message.className = "message success";
+    await loadEmployees();
+  } catch (error) {
+    console.error("Could not update employee:", error);
+    message.textContent =
+      "Update failed. Check Admin role and Firestore permissions.";
+    message.className = "message error";
+ }
+}
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  const button = $("loginButton");
+
+  button.disabled = true;
+  button.textContent = "Signing in…";
+  showAuthMessage("");
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+
+    if (!credential.user.emailVerified) {
+      await signOut(auth);
+      showAuthMessage(
+        "Your email is not verified. Open the verification email from Firebase before signing in."
+      );
+      return;
+    }
+
+    showAuthMessage("Login successful.", "success");
+  } catch (error) {
+    showAuthMessage(explainAuthError(error));
+  } finally {
+    button.disabled = false;
+    button.textContent = "Sign In";
+  }
+});
+
+$("forgotPassword").addEventListener("click", async () => {
+  const email = $("loginEmail").value.trim();
+  if (!email) {
+    showAuthMessage("Enter your email address first.");
+    $("loginEmail").focus();
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAuthMessage("If the account exists, a password-reset email has been sent.", "success");
+  } catch (error) {
+    showAuthMessage(explainAuthError(error));
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    alert("Could not sign out. Please try again.");
+  }
+});
+
+const configReady =
+  firebaseConfig.apiKey &&
+  firebaseConfig.apiKey !== "PASTE_YOUR_FIREBASE_API_KEY" &&
+  firebaseConfig.appId &&
+  firebaseConfig.appId !== "PASTE_YOUR_FIREBASE_APP_ID" &&
+  firebaseConfig.projectId;
+
+if (!configReady) {
+  authLoading.classList.add("hidden");
+  showLogin();
+  showAuthMessage("Setup required: add your Firebase Web App apiKey and appId in the HTML.");
+  $("loginButton").disabled = true;
+} else {
+  try {
+    const firebaseApp = initializeApp(firebaseConfig);
+    auth = getAuth(firebaseApp);
+    db = getFirestore(firebaseApp);
+
+      
+$("registerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = $("registerButton");
+  button.disabled = true;
+
+  try {
+    const name = $("employeeName").value.trim();
+    const email = $("registerEmail").value.trim();
+    const password = $("registerPassword").value;
+
+    if (!name) {
+      throw new Error("Please enter employee name.");
+    }
+
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    await setDoc(doc(db, "profiles", credential.user.uid), {
+      email: credential.user.email,
+      displayName: name,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    await sendEmailVerification(credential.user);
+    await signOut(auth);
+
+    $("registerForm").reset();
+
+    showAuthMessage(
+      "Registration successful! Verify your email and wait for Admin approval.",
+      "success"
+    );
+
+  } catch (error) {
+    showAuthMessage(
+      error.message || "Registration failed. Please try again."
+    );
+  } finally {
+    button.disabled = false;
+  }
+});
+    onAuthStateChanged(auth, async user => {
+      currentUser = null;
+      $("adminPanel").classList.add("hidden");
+
+      if (!user) {
+        showLogin();
+        return;
+      }
+
+      try {
+        await user.reload();
+        const freshUser = auth.currentUser;
+
+        if (!freshUser || !freshUser.emailVerified) {
+          await signOut(auth);
+          showLogin();
+          showAuthMessage("Please verify your email before accessing the dashboard.");
+          return;
+        }
+
+        const roleSnap = await getDoc(doc(db, "roles", freshUser.uid));
+
+if (roleSnap.exists() && roleSnap.data().role === "admin") {
+  showDashboard(freshUser);
+  $("adminPanel").classList.remove("hidden");
+  await loadEmployees();
+  return;
+}
+
+        const profileSnap = await getDoc(doc(db, "profiles", freshUser.uid));
+
+        if (!profileSnap.exists()) {
+          await signOut(auth);
+          showLogin();
+          showAuthMessage("Employee profile not found. Contact Admin.");
+          return;
+        }
+
+        const status = profileSnap.data().status;
+
+        if (status !== "approved") {
+          await signOut(auth);
+          showLogin();
+          showAuthMessage(
+            status === "suspended"
+              ? "Your account is suspended. Contact Admin."
+              : "Your account is pending Admin approval."
+          );
+          return;
+        }
+
+        showDashboard(freshUser);
+      } catch (error) {
+        console.error("Account verification failed:", error);
+        await signOut(auth).catch(() => {});
+        showLogin();
+        showAuthMessage("Account verification failed. Check Firestore permissions and try again.");
+      }
+    });
+
+  } catch (error) {
+    authLoading.classList.add("hidden");
+    showLogin();
+    showAuthMessage("Firebase setup error. Check your Web App configuration.");
+  }
+}
+
+/* =====================================================
+   SERVICE HUB
+   These links are stored in this browser using localStorage.
+   This does not store them in Firestore.
+===================================================== */
+
+const STORAGE_KEY = "safs_india_service_hub_v3";
+
+const DEFAULT_SERVICES = [
+  {id:"gst",name:"GST Portal",url:"https://www.gst.gov.in/",category:"Tax",description:"GST registration, returns and tax services.",icon:"🧾"},
+  {id:"income-tax",name:"Income Tax",url:"https://www.incometax.gov.in/",category:"Tax",description:"Income tax e-filing and taxpayer services.",icon:"💰"},
+  {id:"traces",name:"TRACES",url:"https://www.tdscpc.gov.in/",category:"Tax",description:"TDS and TCS online services.",icon:"📄"},
+  {id:"udyam",name:"Udyam Registration",url:"https://udyamregistration.gov.in/",category:"Government",description:"Official MSME Udyam registration portal.",icon:"🏢"},
+  {id:"epfo",name:"EPFO",url:"https://www.epfindia.gov.in/",category:"Government",description:"Provident fund and EPFO services.",icon:"👥"},
+  {id:"esic",name:"ESIC",url:"https://www.esic.gov.in/",category:"Government",description:"Employee State Insurance services.",icon:"🏥"},
+  {id:"uidai",name:"UIDAI Aadhaar",url:"https://uidai.gov.in/",category:"Government",description:"Official Aadhaar information and services.",icon:"🪪"},
+  {id:"voters",name:"Voters' Service Portal",url:"https://voters.eci.gov.in/",category:"Government",description:"Election and voter services.",icon:"🗳️"},
+  {id:"mca",name:"MCA Portal",url:"https://www.mca.gov.in/",category:"Government",description:"Ministry of Corporate Affairs services.",icon:"🏛️"},
+  {id:"passport",name:"Passport Seva",url:"https://www.passportindia.gov.in/",category:"Government",description:"Passport applications and services.",icon:"🛂"},
+  {id:"gem",name:"GeM Portal",url:"https://gem.gov.in/",category:"Government",description:"Government e-Marketplace.",icon:"🛒"},
+  {id:"nsdl-pan",name:"Protean PAN Services",url:"https://www.protean-tinpan.com/",category:"Government",description:"PAN-related services. Verify the current service provider.",icon:"🪪"},
+  {id:"banking",name:"RBI",url:"https://www.rbi.org.in/",category:"Banking",description:"Reserve Bank of India official website.",icon:"🏦"},
+  {id:"canara",name:"Canara Bank",url:"https://canarabank.com/",category:"Banking",description:"Official bank website.",icon:"🏦"},
+  {id:"sbi",name:"State Bank of India",url:"https://sbi.co.in/",category:"Banking",description:"Official SBI website.",icon:"🏦"},
+  {id:"drive",name:"Google Drive",url:"https://drive.google.com/",category:"Office",description:"Store and manage work files.",icon:"📁"},
+  {id:"gmail",name:"Gmail",url:"https://mail.google.com/",category:"Office",description:"Email and business communication.",icon:"✉️"},
+  {id:"sheets",name:"Google Sheets",url:"https://sheets.google.com/",category:"Office",description:"Online spreadsheets.",icon:"📊"},
+  {id:"github",name:"GitHub",url:"https://github.com/",category:"Development",description:"Manage software projects and code.",icon:"💻"},
+  {id:"chatgpt",name:"ChatGPT",url:"https://chatgpt.com/",category:"AI Tools",description:"AI assistant for writing and work.",icon:"🤖"},
+  {id:"gemini",name:"Google Gemini",url:"https://gemini.google.com/",category:"AI Tools",description:"Google AI assistant.",icon:"✨"},
+  {id:"canva",name:"Canva",url:"https://www.canva.com/",category:"Design",description:"Create posters, banners and designs.",icon:"🎨"},
+  {id:"microsoft",name:"Microsoft 365",url:"https://www.microsoft365.com/",category:"Office",description:"Microsoft productivity tools.",icon:"📘"}
+];
+
+let services = loadServices();
+let activeView = "services";
+let editingId = null;
+let favorites = loadFavorites();
+
+function loadServices() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (error) {}
+  return DEFAULT_SERVICES.map(item => ({...item, custom:false}));
+}
+
+function saveServices() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
+}
+
+function loadFavorites() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STORAGE_KEY + "_favorites") || "[]");
+    return new Set(Array.isArray(value) ? value : []);
+  } catch (error) {
+    return new Set();
+  }
+}
+
+function saveFavorites() {
+  localStorage.setItem(STORAGE_KEY + "_favorites", JSON.stringify([...favorites]));
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[char]));
+}
+
+function safeWebsiteUrl(value) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    return parsed.href;
+  } catch (error) {
+    return null;
+  }
+}
+
+function categories() {
+  return [...new Set(services.map(item => item.category).filter(Boolean))].sort();
+}
+
+function updateCategoryOptions() {
+  const filter = $("categoryFilter");
+  const oldValue = filter.value || "All";
+  filter.innerHTML = '<option value="All">All categories</option>' +
+    categories().map(category =>
+      `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`
+    ).join("");
+  filter.value = categories().includes(oldValue) ? oldValue : "All";
+
+  const formSelect = $("serviceCategory");
+  const current = formSelect.value;
+  const base = ["Government","Tax","Banking","Office","AI Tools","Design","Development","Computer Support","Other"];
+  const all = [...new Set([...base, ...categories()])];
+  formSelect.innerHTML = all.map(category =>
+    `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`
+  ).join("");
+  if (all.includes(current)) formSelect.value = current;
+}
+
+function setView(view) {
+  activeView = view;
+  const ids = {
+    services:"servicesView",
+    favorites:"servicesView",
+    add:"addView",
+    manage:"manageView",
+    backup:"backupView"
+  };
+
+  Object.values(ids).forEach(id => $(id).classList.add("hidden"));
+  $(ids[view] || "servicesView").classList.remove("hidden");
+
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+
+  if (view === "favorites") $("pageTitle").textContent = "Favorite Services";
+  else if (view === "services") $("pageTitle").textContent = "All Services";
+
+  if (view === "services" || view === "favorites") renderServices();
+  if (view === "manage") renderManage();
+  if (view === "add") resetForm();
+}
+
+function renderServices() {
+  updateCategoryOptions();
+
+  const search = $("searchInput").value.trim().toLowerCase();
+  const category = $("categoryFilter").value;
+
+  let filtered = services.filter(item => {
+    const matchesSearch = [item.name,item.category,item.description]
+      .some(value => String(value || "").toLowerCase().includes(search));
+    const matchesCategory = category === "All" || item.category === category;
+    const matchesFavorite = activeView !== "favorites" || favorites.has(item.id);
+    return matchesSearch && matchesCategory && matchesFavorite;
+  });
+
+  $("totalCount").textContent = services.length;
+  $("favoriteCount").textContent = favorites.size;
+  $("customCount").textContent = services.filter(item => item.custom).length;
+
+  const grid = $("serviceGrid");
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">No services found. Try another search or add a service.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(item => {
+    const url = safeWebsiteUrl(item.url);
+    const openAction = url
+      ? `<a class="open-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">Open Website ↗</a>`
+      : `<span class="open-link">Invalid URL</span>`;
+
+    return `
+      <article class="service-card">
+        <div class="card-top">
+          <div class="service-icon">${escapeHTML(item.icon || "🌐")}</div>
+          <button class="fav-btn" data-favorite="${escapeHTML(item.id)}"
+            aria-label="Toggle favorite" title="Toggle favorite">
+            <span class="star">${favorites.has(item.id) ? "★" : "☆"}</span>
+          </button>
+        </div>
+        <div class="category">${escapeHTML(item.category || "Other")}</div>
+        <h3>${escapeHTML(item.name)}</h3>
+        <div class="description">${escapeHTML(item.description || "Open this service website.")}</div>
+        <div class="card-actions">
+          ${openAction}
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function renderManage() {
+  const list = $("manageList");
+  if (!services.length) {
+    list.innerHTML = '<div class="empty">No services to manage.</div>';
+    return;
+  }
+
+  list.innerHTML = services.map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:white;border:1px solid var(--border);border-radius:10px;padding:13px;margin:10px 0">
+      <div style="min-width:0;flex:1">
+        <strong>${escapeHTML(item.icon || "🌐")} ${escapeHTML(item.name)}</strong>
+        <div class="muted">${escapeHTML(item.category)} · ${escapeHTML(item.url)}</div>
+      </div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-secondary" data-edit="${escapeHTML(item.id)}">Edit</button>
+        <button class="btn btn-danger" data-delete="${escapeHTML(item.id)}">Remove</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function resetForm() {
+  $("serviceForm").reset();
+  $("serviceId").value = "";
+  $("formHeading").textContent = "Add a Service";
+  $("formMessage").textContent = "";
+  editingId = null;
+}
+
+function editService(id) {
+  const item = services.find(service => service.id === id);
+  if (!item) return;
+
+  editingId = id;
+  $("serviceId").value = id;
+  $("serviceName").value = item.name || "";
+  $("serviceUrl").value = item.url || "";
+  $("serviceCategory").value = item.category || "Other";
+  $("serviceDescription").value = item.description || "";
+  $("serviceIcon").value = item.icon || "";
+  $("formHeading").textContent = "Edit Service";
+  setView("add");
+  $("formHeading").textContent = "Edit Service";
+}
+
+function renderAll() {
+  updateCategoryOptions();
+  renderServices();
+  renderManage();
+}
+
+document.querySelectorAll(".nav-btn").forEach(button => {
+  button.addEventListener("click", () => setView(button.dataset.view));
+});
+
+$("addServiceShortcut").addEventListener("click", () => setView("add"));
+$("searchInput").addEventListener("input", renderServices);
+$("categoryFilter").addEventListener("change", renderServices);
+$("cancelEdit").addEventListener("click", resetForm);
+
+$("serviceGrid").addEventListener("click", event => {
+  const button = event.target.closest("[data-favorite]");
+  if (!button) return;
+
+  const id = button.dataset.favorite;
+  if (favorites.has(id)) favorites.delete(id);
+  else favorites.add(id);
+
+  saveFavorites();
+  renderServices();
+  $("favoriteCount").textContent = favorites.size;
+});
+
+$("manageList").addEventListener("click", event => {
+  const editButton = event.target.closest("[data-edit]");
+  const deleteButton = event.target.closest("[data-delete]");
+
+  if (editButton) {
+    editService(editButton.dataset.edit);
+    return;
+  }
+
+  if (deleteButton) {
+    const id = deleteButton.dataset.delete;
+    const item = services.find(service => service.id === id);
+    if (!item) return;
+
+    if (confirm(`Remove "${item.name}" from this browser?`)) {
+      services = services.filter(service => service.id !== id);
+      favorites.delete(id);
+      saveServices();
+      saveFavorites();
+      renderAll();
+    }
+  }
+});
+
+$("serviceForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const name = $("serviceName").value.trim();
+  const url = safeWebsiteUrl($("serviceUrl").value.trim());
+  const category = $("serviceCategory").value;
+  const description = $("serviceDescription").value.trim();
+  const icon = $("serviceIcon").value.trim() || "🌐";
+
+  if (!name || !url) {
+    $("formMessage").textContent = "Enter a valid service name and HTTP/HTTPS URL.";
+    $("formMessage").className = "message error";
+    return;
+  }
+
+  if (editingId) {
+    services = services.map(item => item.id === editingId
+      ? {...item, name, url, category, description, icon}
+      : item
+    );
+  } else {
+    services.unshift({
+      id: "custom-" + Date.now() + "-" + Math.random().toString(36).slice(2,8),
+      name, url, category, description, icon, custom:true
+    });
+  }
+
+  saveServices();
+  renderAll();
+  resetForm();
+  $("formMessage").textContent = "Service saved in this browser.";
+  $("formMessage").className = "message success";
+  setView("services");
+});
+
+function downloadBackup() {
+  const backup = {
+    app: "SAFS INDIA Service Hub",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    services,
+    favorites: [...favorites]
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "safs-service-hub-backup.json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+$("exportButton").addEventListener("click", downloadBackup);
+$("exportButton2").addEventListener("click", downloadBackup);
+
+$("importButton").addEventListener("click", async () => {
+  const file = $("importFile").files[0];
+  const message = $("backupMessage");
+
+  if (!file) {
+    message.textContent = "Choose a JSON backup file first.";
+    message.className = "message error";
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(await file.text());
+    const importedServices = Array.isArray(parsed) ? parsed : parsed.services;
+
+    if (!Array.isArray(importedServices)) {
+      throw new Error("This file does not contain a services list.");
+    }
+
+    const cleaned = importedServices.map(item => {
+      if (!item || typeof item.name !== "string" || !safeWebsiteUrl(item.url)) {
+        throw new Error("Backup contains a service with an invalid name or URL.");
+      }
+
+      return {
+        id: String(item.id || ("import-" + Math.random().toString(36).slice(2,10))),
+        name: item.name.slice(0,80),
+        url: safeWebsiteUrl(item.url),
+        category: String(item.category || "Other").slice(0,50),
+        description: String(item.description || "").slice(0,180),
+        icon: String(item.icon || "🌐").slice(0,8),
+        custom: item.custom === true
+      };
+    });
+
+    if (!confirm("Replace the services saved in this browser with the imported backup?")) return;
+
+    services = cleaned;
+    if (parsed && !Array.isArray(parsed) && Array.isArray(parsed.favorites)) {
+      favorites = new Set(parsed.favorites.map(String).filter(id =>
+        services.some(item => item.id === id)
+      ));
+    } else {
+      favorites = new Set();
+    }
+
+    saveServices();
+    saveFavorites();
+    renderAll();
+    message.textContent = "Backup imported successfully into this browser.";
+    message.className = "message success";
+  } catch (error) {
+    message.textContent = error.message || "Could not import this file.";
+    message.className = "message error";
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>
